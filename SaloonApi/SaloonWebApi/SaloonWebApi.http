@@ -1,0 +1,6 @@
+@SaloonWebApi_HostAddress = http://localhost:5017
+
+GET {{SaloonWebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
