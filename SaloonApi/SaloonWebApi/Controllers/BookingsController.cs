@@ -6,7 +6,7 @@ using SaloonWebApi.DTOs;
 
 namespace SaloonWebApi.Controllers
 {
-    [ApiExplorerSettings(IgnoreApi = true)]
+   
     [ApiController]
     [Route("api/[controller]")]
     public class BookingsController : ControllerBase
@@ -106,6 +106,7 @@ namespace SaloonWebApi.Controllers
 
 
         // Add one or more services to an existing booking
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost("{id}/services")]
         public async Task<IActionResult> AddServices(int id, [FromBody] List<BookingServiceDto> services)
         {
@@ -166,6 +167,7 @@ namespace SaloonWebApi.Controllers
         }
 
         // Remove a service (booking detail) from a booking
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpDelete("{id}/services/{detailId}")]
         public async Task<IActionResult> RemoveService(int id, int detailId)
         {
@@ -200,6 +202,7 @@ namespace SaloonWebApi.Controllers
             }
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, BookingMaster model)
         {
@@ -214,6 +217,7 @@ namespace SaloonWebApi.Controllers
             return NoContent();
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] int statusId)
         {
@@ -224,6 +228,7 @@ namespace SaloonWebApi.Controllers
             return NoContent();
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPut("{id}/assign")]
         public async Task<IActionResult> AssignServicePerson(int id, [FromBody] BookingsAssignDto dto)
         {
@@ -235,6 +240,7 @@ namespace SaloonWebApi.Controllers
             return NoContent();
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpGet("by-role")]
         public async Task<IActionResult> GetByRole([FromQuery] int roleId)
         {
@@ -243,6 +249,7 @@ namespace SaloonWebApi.Controllers
             return Ok(list);
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPut("{id}/close")]
         public async Task<IActionResult> CloseBooking(int id)
         {
