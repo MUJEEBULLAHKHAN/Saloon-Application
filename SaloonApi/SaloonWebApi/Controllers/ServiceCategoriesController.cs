@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaloonWebApi.Data;
@@ -7,6 +8,7 @@ using SaloonWebApi.Models;
 namespace SaloonWebApi.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class ServiceCategoriesController : ControllerBase
     {

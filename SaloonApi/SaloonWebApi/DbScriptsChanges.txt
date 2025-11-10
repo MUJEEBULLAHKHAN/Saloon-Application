@@ -1,0 +1,20 @@
+﻿
+08-11-2025
+
+-- Script to add a new column 'last_login' to the 'users' table
+ALTER TABLE dbo.Users
+ADD RefreshToken NVARCHAR(500) NULL,
+    RefreshTokenExpiry DATETIME NULL;
+Go
+
+
+------------------------------------------------------------------
+
+
+10-11-2025
+
+ ALTER TABLE [glamloftqa].[dbo].[ServiceSale_Detail]
+ALTER COLUMN Price decimal(18,2) NOT NULL;
+
+
+------------------------------------------------------------------

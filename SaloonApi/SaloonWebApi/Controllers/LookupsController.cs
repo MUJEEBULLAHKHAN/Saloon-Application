@@ -1,15 +1,18 @@
-using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaloonWebApi.Data;
 using SaloonWebApi.DTOs;
 using SaloonWebApi.Models;
-using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace SaloonWebApi.Controllers
 {
+
     [ApiController]
+    [Authorize]
     [Route("api/lookups")]
     public class LookupsController : ControllerBase
     {
@@ -125,7 +128,7 @@ namespace SaloonWebApi.Controllers
             {
                 try
                 {
-                    savedImagePath = await SaveBase64ImageAsync(dto.ImageBase64, "Image_Server");
+                    savedImagePath = await SaveBase64ImageAsync(dto.ImageBase64, "image_server");
                 }
                 catch (FormatException)
                 {
@@ -293,6 +296,7 @@ namespace SaloonWebApi.Controllers
            
             await System.IO.File.WriteAllBytesAsync(filePath, bytes);
             var shortpath = folderRelative + "/" + fileName;
+            var fullpathurl = Path.GetFullPath(filePath);
             return shortpath;
         }
     }

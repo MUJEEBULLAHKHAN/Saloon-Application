@@ -17,5 +17,8 @@ namespace SaloonWebApi.Models
         public DateTime Insert_Date { get; set; }
         public int? Modify_User { get; set; }
         public DateTime? Modify_Date { get; set; }
+
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiry { get; set; }
     }
 }

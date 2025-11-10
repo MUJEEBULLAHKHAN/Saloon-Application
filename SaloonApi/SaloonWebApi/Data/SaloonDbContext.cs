@@ -25,6 +25,16 @@ namespace SaloonWebApi.Data
         public DbSet<UserRole> UserRoles { get; set; } = null!;
         public DbSet<Branch> Branches { get; set; } = null!;
 
+        // New product-related entities
+        public DbSet<ProductCat> ProductCats { get; set; } = null!;
+        public DbSet<Product> Products { get; set; } = null!;
+        public DbSet<ProductSaleMaster> ProductSaleMasters { get; set; } = null!;
+        public DbSet<ProductSaleDetail> ProductSaleDetails { get; set; } = null!;
+
+        // Service sale entities
+        public DbSet<ServiceSaleMaster> ServiceSaleMasters { get; set; } = null!;
+        public DbSet<ServiceSaleDetail> ServiceSaleDetails { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Map table names and keys to match existing DB
@@ -43,6 +53,16 @@ namespace SaloonWebApi.Data
             modelBuilder.Entity<User>().ToTable("Users").HasKey(u => u.User_Id);
             modelBuilder.Entity<UserRole>().ToTable("UserRoles").HasKey(ur => ur.UserRole_Id);
             modelBuilder.Entity<Branch>().ToTable("Branch").HasKey(br => br.Id);
+
+            // product related mappings
+            modelBuilder.Entity<ProductCat>().ToTable("ProductCat").HasKey(pc => pc.Category_Id);
+            modelBuilder.Entity<Product>().ToTable("Products").HasKey(p => p.Product_Id);
+            modelBuilder.Entity<ProductSaleMaster>().ToTable("ProductSale_Master").HasKey(pm => pm.Sale_Id);
+            modelBuilder.Entity<ProductSaleDetail>().ToTable("ProductSale_Detail").HasKey(pd => pd.SaleDetail_Id);
+
+            // service sale mappings
+            modelBuilder.Entity<ServiceSaleMaster>().ToTable("ServiceSale_Master").HasKey(sm => sm.Service_Id);
+            modelBuilder.Entity<ServiceSaleDetail>().ToTable("ServiceSale_Detail").HasKey(sd => sd.Service_Detail_Id);
 
             base.OnModelCreating(modelBuilder);
         }

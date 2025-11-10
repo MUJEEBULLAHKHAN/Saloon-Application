@@ -1,0 +1,34 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace SaloonWebApi.Models
+{
+    public class Product
+    {
+        [Key]
+        public int Product_Id { get; set; }
+        public string Product_Code { get; set; } = string.Empty;
+        public string Product_Name { get; set; } = string.Empty;
+        public string? Prod_Name { get; set; }
+        public string Product_Description { get; set; } = string.Empty;
+        public int Brand { get; set; }
+        public string? Weight { get; set; }
+        public int? Unit { get; set; }
+        public int Category { get; set; }
+        public decimal Unit_Price { get; set; }
+        public decimal Company_Price { get; set; }
+        public decimal Min_Price { get; set; }
+        public decimal Max_Price { get; set; }
+        public decimal? Percentage { get; set; }
+        public decimal? Sale_Price { get; set; }
+        public string? Product_Image { get; set; }
+        public string Account_No { get; set; } = string.Empty;
+        public int? No_of_Times { get; set; }
+        public string? Barcode { get; set; }
+        public int? Approved { get; set; }
+        public int Active { get; set; }
+        public int Insert_User { get; set; }
+        public DateTime Insert_Date { get; set; }
+        public int? Modify_User { get; set; }
+        public DateTime? Modify_Date { get; set; }
+    }
+}

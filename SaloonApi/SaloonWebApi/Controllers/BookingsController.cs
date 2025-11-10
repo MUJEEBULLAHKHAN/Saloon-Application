@@ -1,13 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaloonWebApi.Data;
-using SaloonWebApi.Models;
 using SaloonWebApi.DTOs;
+using SaloonWebApi.Models;
 
 namespace SaloonWebApi.Controllers
 {
    
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class BookingsController : ControllerBase
     {
@@ -20,19 +22,155 @@ namespace SaloonWebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var bookings = await _db.BookingMasters.ToListAsync();
-            return Ok(bookings);
+            var list = await (from b in _db.BookingMasters
+                              join c in _db.Customers on b.Customer_Id equals c.Customer_Id into cj
+                              from c in cj.DefaultIfEmpty()
+                              join s in _db.BookingStatuses on b.Booking_Status_Id equals s.Id into sj
+                              from s in sj.DefaultIfEmpty()
+                              select new
+                              {
+                                  Booking = b,
+                                  CustomerName = c != null ? c.Customer_Name : null,
+                                  BookingStatusName = s != null ? s.Name : null
+                              }).ToListAsync();
+
+            return Ok(list);
         }
 
+        //[HttpGet("{id}")]
+        //public async Task<IActionResult> GetById(int id)
+        //{
+        //    var booking = await _db.BookingMasters.FindAsync(id);
+        //    if (booking == null) return NotFound();
+        //    var details = await _db.BookingDetails.Where(d => d.BookingMaster_Id == id).ToListAsync();
+        //    return Ok(new { booking, details });
+        //}
+        [HttpGet("details")]
+        public async Task<IActionResult> GetAllBookingDetails()
+        {
+            // load masters with customer name/registration and booking status name
+            var masters = await (from b in _db.BookingMasters
+                                 join c in _db.Customers on b.Customer_Id equals c.Customer_Id into cj
+                                 from c in cj.DefaultIfEmpty()
+                                 join s in _db.BookingStatuses on b.Booking_Status_Id equals s.Id into sj
+                                 from s in sj.DefaultIfEmpty()
+                                 select new
+                                 {
+                                     Booking = b,
+                                     CustomerName = c != null ? c.Customer_Name : null,
+                                     CustomerRegistrationDate = c != null ? c.Registration_Date : (DateTime?)null,
+                                     BookingStatusName = s != null ? s.Name : null
+                                 }).ToListAsync();
+
+            if (!masters.Any())
+                return Ok(masters); // nothing to attach details to
+
+            // fetch all details for the bookings above, joined with service & employee (provider) info
+            var bookingIds = masters.Select(m => m.Booking.Id).Distinct().ToList();
+
+            var details = await (from d in _db.BookingDetails
+                                 where bookingIds.Contains(d.BookingMaster_Id)
+                                 join sv in _db.Services on d.Service_Id equals sv.Service_Id into svj
+                                 from sv in svj.DefaultIfEmpty()
+                                 join e in _db.Employees on d.ServiceProvider_Id equals e.Employee_Id into ej
+                                 from e in ej.DefaultIfEmpty()
+                                 select new
+                                 {
+                                     d.BookingMaster_Id,
+                                     Detail = d,
+                                     ServiceName = sv != null ? sv.Service_Name : null,
+                                     ServiceProviderName = e != null
+                                         ? (string.IsNullOrWhiteSpace(e.Employee_LastName)
+                                             ? e.Employee_Name
+                                             : (e.Employee_Name + " " + e.Employee_LastName))
+                                         : null
+                                 }).ToListAsync();
+
+        var grouped = details
+            .GroupBy(x => x.BookingMaster_Id)
+            .ToDictionary(g => g.Key, g => g.Select(x => new
+            {
+                Detail = x.Detail,
+                x.ServiceName,
+                x.ServiceProviderName
+            }).ToList());
+
+
+            // Fix: ensure Details property has a consistent compile-time type (use object)
+            // Replace the existing 'var result = masters.Select(m => { ... })' block with this:
+            var result = masters.Select(m =>
+            {
+                grouped.TryGetValue(m.Booking.Id, out var dets);
+
+                // avoid the mixed-generic-type conditional which causes the compiler error
+                object detailsObj;
+                if (dets == null)
+                    detailsObj = new List<object>();
+                else
+                    detailsObj = dets;
+
+                return new
+                {
+                    Booking = m.Booking,
+                    CustomerName = m.CustomerName,
+                    CustomerRegistrationDate = m.CustomerRegistrationDate,
+                    BookingStatusName = m.BookingStatusName,
+                    Details = detailsObj
+                };
+            });
+
+            return Ok(result);
+        }
+
+
         [HttpGet("{id}")]
+
         public async Task<IActionResult> GetById(int id)
         {
             var booking = await _db.BookingMasters.FindAsync(id);
             if (booking == null) return NotFound();
-            var details = await _db.BookingDetails.Where(d => d.BookingMaster_Id == id).ToListAsync();
-            return Ok(new { booking, details });
-        }
 
+            // fetch customer (if any) to get name and registration date
+            Customer? customer = null;
+            if (booking.Customer_Id.HasValue)
+            {
+                customer = await _db.Customers
+                    .Where(c => c.Customer_Id == booking.Customer_Id.Value)
+                    .Select(c => new Customer
+                    {
+                        Customer_Id = c.Customer_Id,
+                        Customer_Name = c.Customer_Name,
+                        Registration_Date = c.Registration_Date
+                    })
+                    .FirstOrDefaultAsync();
+            }
+
+            // fetch details joined with service and employee (provider) names
+            var details = await (from d in _db.BookingDetails
+                                 where d.BookingMaster_Id == id
+                                 join s in _db.Services on d.Service_Id equals s.Service_Id into sj
+                                 from s in sj.DefaultIfEmpty()
+                                 join e in _db.Employees on d.ServiceProvider_Id equals e.Employee_Id into ej
+                                 from e in ej.DefaultIfEmpty()
+                                 select new
+                                 {
+                                     Detail = d,
+                                     ServiceName = s != null ? s.Service_Name : null,
+                                     ServiceProviderName = e != null
+                                         ? (string.IsNullOrWhiteSpace(e.Employee_LastName)
+                                             ? e.Employee_Name
+                                             : (e.Employee_Name + " " + e.Employee_LastName))
+                                         : null
+                                 }).ToListAsync();
+
+            return Ok(new
+            {
+                Booking = booking,
+                CustomerName = customer?.Customer_Name,
+                CustomerRegistrationDate = customer?.Registration_Date,
+                Details = details
+            });
+        }
         // Persist booking + details and allow optional serviceman assignment per service
         [HttpPost]
         public async Task<IActionResult> Create(CreateBookingDto dto)
@@ -97,7 +235,7 @@ namespace SaloonWebApi.Controllers
 
                 return CreatedAtAction(nameof(GetById), new { id = booking.Id }, new { booking, details });
             }
-            catch
+            catch(Exception ex)
             {
                 await tx.RollbackAsync();
                 throw;
@@ -106,7 +244,7 @@ namespace SaloonWebApi.Controllers
 
 
         // Add one or more services to an existing booking
-        [ApiExplorerSettings(IgnoreApi = true)]
+       
         [HttpPost("{id}/services")]
         public async Task<IActionResult> AddServices(int id, [FromBody] List<BookingServiceDto> services)
         {
@@ -167,7 +305,7 @@ namespace SaloonWebApi.Controllers
         }
 
         // Remove a service (booking detail) from a booking
-        [ApiExplorerSettings(IgnoreApi = true)]
+       
         [HttpDelete("{id}/services/{detailId}")]
         public async Task<IActionResult> RemoveService(int id, int detailId)
         {
@@ -202,7 +340,7 @@ namespace SaloonWebApi.Controllers
             }
         }
 
-        [ApiExplorerSettings(IgnoreApi = true)]
+      
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, BookingMaster model)
         {
@@ -217,7 +355,6 @@ namespace SaloonWebApi.Controllers
             return NoContent();
         }
 
-        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] int statusId)
         {
@@ -228,7 +365,6 @@ namespace SaloonWebApi.Controllers
             return NoContent();
         }
 
-        [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPut("{id}/assign")]
         public async Task<IActionResult> AssignServicePerson(int id, [FromBody] BookingsAssignDto dto)
         {

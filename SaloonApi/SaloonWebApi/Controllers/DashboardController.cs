@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaloonWebApi.Data;
@@ -5,6 +6,7 @@ using SaloonWebApi.Data;
 namespace SaloonWebApi.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/dashboard")]
     public class DashboardController : ControllerBase
     {
